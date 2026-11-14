@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rotina Diária - Painel Principal</title>
+    <link rel="stylesheet" href="estilo.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#2563eb">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Rotina Estação">
+</head>
+
+<body>
+
+    <div class="app-container">
+        <header>
+            <span class="header-badge" id="badge-estacao">Novo Eldorado • 1° Turno</span>
+            <h1>Checklist Diário</h1>
+            <p id="current-date"></p>
+
+            <div class="progress-summary">
+                <span>Progresso Diário</span>
+                <span id="progresso-texto">0 de 0 concluídos</span>
+            </div>
+            <div class="progress-bar-container">
+                <div class="progress-bar" id="progress-bar"></div>
+            </div>
+        </header>
+
+        <!-- Seletor de Estação e Turno -->
+        <section class="shift-selector-card">
+            <div class="select-group">
+                <label for="select-estacao">Estação</label>
+                <select id="select-estacao" onchange="salvarSelecaoPlantao()">
+                    <option value="Novo Eldorado">Novo Eldorado</option>
+                    <option value="Eldorado">Eldorado</option>
+                    <option value="Cidade Industrial">Cidade Industrial</option>
+                    <option value="Vila Oeste">Vila Oeste</option>
+                    <option value="Gameleira">Gameleira</option>
+                    <option value="Nova Suíça">Nova Suíça</option>
+                    <option value="Amazonas">Amazonas</option>
+                    <option value="Calafate">Calafate</option>
+                    <option value="Carlos Prates">Carlos Prates</option>
+                    <option value="Lagoinha">Lagoinha</option>
+                    <option value="Central">Central</option>
+                    <option value="Santa Efigênia">Santa Efigênia</option>
+                    <option value="Santa Tereza">Santa Tereza</option>
+                    <option value="Horto Florestal">Horto Florestal</option>
+                    <option value="Santa Inês">Santa Inês</option>
+                    <option value="José Candido Da Silveira">José Candido Da Silveira</option>
+                    <option value="Minas Shopping">Minas Shopping</option>
+                    <option value="São Gabriel">São Gabriel</option>
+                    <option value="Primeiro de maio">Primeiro de maio</option>
+                    <option value="Waldomiro Lobo">Waldomiro Lobo</option>
+                    <option value="Floramar">Floramar</option>
+                    <option value="Vilarinho">Vilarinho</option>
+                </select>
+            </div>
+            <div class="select-group">
+                <label for="select-turno">Turno</label>
+                <select id="select-turno" onchange="salvarSelecaoPlantao()">
+                    <option value="1° Turno">1° Turno</option>
+                    <option value="2° Turno">2° Turno</option>
+                </select>
+            </div>
+        </section>
+
+        <div class="celebration-banner" id="celebration-banner">
+            🎉 Parabéns! Todas as rotinas obrigatórias deste turno foram concluídas.
+        </div>
+
+        <div class="menu-buttons">
+            <!-- Botão 1: Formulários -->
+            <a href="formularios.html" class="nav-card-btn" id="btn-formularios">
+                <div class="btn-left">
+                    <div class="btn-icon-box">
+                        <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"
+                            viewBox="0 0 24 24">
+                            <path
+                                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                        </svg>
+                    </div>
+                    <div class="btn-text-group">
+                        <span>Formulários Diários</span>
+                        <span class="btn-subtitle">Checklists obrigatórios</span>
+                    </div>
+                </div>
+                <span class="nav-badge" id="contador-externos">0/0 →</span>
+            </a>
+
+            <!-- Botão 2: Rotinas Internas -->
+            <a href="tarefas.html" class="nav-card-btn secondary" id="btn-internas">
+                <div class="btn-left">
+                    <div class="btn-icon-box">
+                        <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"
+                            viewBox="0 0 24 24">
+                            <path
+                                d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                        </svg>
+                    </div>
+                    <div class="btn-text-group">
+                        <span>Rotinas Internas da Estação</span>
+                        <span class="btn-subtitle">Conferências, DDS e liderança</span>
+                    </div>
+                </div>
+                <span class="nav-badge" id="contador-internas">0/0 →</span>
+            </a>
+
+            <!-- Botão 3: Cursos e Treinamentos -->
+            <a href="cursos.html" class="nav-card-btn tertiary">
+                <div class="btn-left">
+                    <div class="btn-icon-box">
+                        <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"
+                            viewBox="0 0 24 24">
+                            <path d="M12 14l9-5-9-5-9 5 9 5z" />
+                            <path
+                                d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
+                        </svg>
+                    </div>
+                    <div class="btn-text-group">
+                        <span>Cursos e Treinamentos</span>
+                        <span class="btn-subtitle">Quiz e Escola Mobifácil</span>
+                    </div>
+                </div>
+                <span class="nav-badge">Acessar →</span>
+            </a>
+        </div>
+
+        <div class="panel-footer-actions">
+            <button class="reset-btn" onclick="resetManual()">Desmarcar tudo</button>
+        </div>
+    </div>
+
+    <script>
+        const idsExternos = ["form_1", "form_2", "form_4", "form_5"];
+        const idsInternos = ["check_1", "check_2", "check_3", "check_4", "check_5", "check_6"];
+        const idsDiarios = [...idsExternos, ...idsInternos];
+
+        const hoje = new Date().toLocaleDateString('pt-BR');
+        document.getElementById('current-date').innerText = `Data: ${hoje}`;
+
+        // Limpa automaticamente todos os checklists de dias anteriores ao virar o dia
+        if (localStorage.getItem('checklist_data') !== hoje) {
+            Object.keys(localStorage).forEach(chave => {
+                if (chave.startsWith('checklist_concluidos')) {
+                    localStorage.removeItem(chave);
+                }
+            });
+            localStorage.setItem('checklist_data', hoje);
+        }
+
+        function obterChaveStorage() {
+            const estacao = document.getElementById('select-estacao').value;
+            const turno = document.getElementById('select-turno').value;
+            return `checklist_concluidos_${estacao}_${turno}`;
+        }
+
+        function carregarSelecaoPlantao() {
+            const selectEstacao = document.getElementById('select-estacao');
+            const selectTurno = document.getElementById('select-turno');
+
+            const estacaoSalva = localStorage.getItem('checklist_estacao');
+            const turnoSalvo = localStorage.getItem('checklist_turno');
+
+            const opcoesValidas = Array.from(selectEstacao.options).map(opt => opt.value);
+            if (estacaoSalva && opcoesValidas.includes(estacaoSalva)) {
+                selectEstacao.value = estacaoSalva;
+            } else {
+                selectEstacao.selectedIndex = 0;
+                localStorage.setItem('checklist_estacao', selectEstacao.value);
+            }
+
+            if (turnoSalvo === '1° Turno' || turnoSalvo === '2° Turno') {
+                selectTurno.value = turnoSalvo;
+            } else {
+                selectTurno.selectedIndex = 0;
+                localStorage.setItem('checklist_turno', selectTurno.value);
+            }
+
+            atualizarBadgeCabecalho();
+        }
+
+        function salvarSelecaoPlantao() {
+            const estacao = document.getElementById('select-estacao').value;
+            const turno = document.getElementById('select-turno').value;
+            localStorage.setItem('checklist_estacao', estacao);
+            localStorage.setItem('checklist_turno', turno);
+            atualizarBadgeCabecalho();
+            atualizarPainel(); // Atualiza imediatamente os contadores para a estação/turno selecionados
+        }
+
+        function atualizarBadgeCabecalho() {
+            const estacao = document.getElementById('select-estacao').value;
+            const turno = document.getElementById('select-turno').value;
+            document.getElementById('badge-estacao').innerText = `${estacao} • ${turno}`;
+        }
+
+        function obterConcluidos() {
+            const chave = obterChaveStorage();
+            return JSON.parse(localStorage.getItem(chave)) || [];
+        }
+
+        function atualizarPainel() {
+            const concluidos = obterConcluidos();
+
+            const feitosGeral = idsDiarios.filter(id => concluidos.includes(id)).length;
+            const porcentagem = (feitosGeral / idsDiarios.length) * 100;
+            document.getElementById('progress-bar').style.width = `${porcentagem}%`;
+            document.getElementById('progresso-texto').innerText = `${feitosGeral} de ${idsDiarios.length} concluídos`;
+
+            document.getElementById('celebration-banner').classList.toggle('visible', feitosGeral === idsDiarios.length);
+
+            const externosFeitos = idsExternos.filter(id => concluidos.includes(id)).length;
+            document.getElementById('contador-externos').innerText = `${externosFeitos}/${idsExternos.length} →`;
+            document.getElementById('btn-formularios').classList.toggle('all-done', externosFeitos === idsExternos.length);
+
+            const internasFeitas = idsInternos.filter(id => concluidos.includes(id)).length;
+            document.getElementById('contador-internas').innerText = `${internasFeitas}/${idsInternos.length} →`;
+            document.getElementById('btn-internas').classList.toggle('all-done', internasFeitas === idsInternos.length);
+        }
+
+        function resetManual() {
+            const estacao = document.getElementById('select-estacao').value;
+            const turno = document.getElementById('select-turno').value;
+            if (confirm(`Deseja desmarcar todos os formulários e rotinas de ${estacao} (${turno})?`)) {
+                localStorage.setItem(obterChaveStorage(), JSON.stringify([]));
+                atualizarPainel();
+            }
+        }
+
+        carregarSelecaoPlantao();
+        window.addEventListener('pageshow', () => {
+            carregarSelecaoPlantao();
+            atualizarPainel();
+        });
+        atualizarPainel();
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js').catch(() => { });
+            });
+        }
+    </script>
+
+</body>
+
+</html>

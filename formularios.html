@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formulários Diários - Checklist</title>
+    <link rel="stylesheet" href="estilo.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#2563eb">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Rotina Estação">
+</head>
+
+<body>
+
+    <div class="app-container">
+        <header>
+            <span class="header-badge" id="badge-estacao">Novo Eldorado • 1° Turno</span>
+            <h1>Formulários Diários</h1>
+            <p id="current-date"></p>
+            <div class="progress-bar-container">
+                <div class="progress-bar" id="progress-bar"></div>
+            </div>
+        </header>
+
+        <div class="task-list" id="task-list"></div>
+
+        <nav class="bottom-nav">
+            <a href="index.html" class="back-btn">← Voltar ao Painel Principal</a>
+        </nav>
+    </div>
+
+    <script>
+        const formulariosExternos = [
+            {
+                id: "form_1",
+                titulo: "1. CHECK-LIST DIÁRIO",
+                url: "https://docs.google.com/forms/d/e/1FAIpQLSc4v6_KL56tjJqakxfiiy4c0zPyR8ElrLbuv0aFtrZYO-GXLA/viewform"
+            },
+            {
+                id: "form_2",
+                titulo: "2. CHECK-LIST DEA",
+                url: "https://docs.google.com/forms/d/1Uiq2Z85dtfQXVUfXPlFWl8kIqPLkMXTXzFLw_-5H6fU/viewform?edit_requested=true"
+            },
+            {
+                id: "form_4",
+                titulo: "3. CHECK LIST ATM",
+                url: "https://docs.google.com/forms/d/e/1FAIpQLSdYCd0Q0nhNq9eIgOBBBllZMWqLrbCgojTKJsIIeiToH_mxVQ/viewform"
+            },
+            {
+                id: "form_5",
+                titulo: "4. CHECK LIST BILHETERIA",
+                url: "https://docs.google.com/forms/d/e/1FAIpQLSczaFm92wFpjvR05Mt1rx2WoZFav8NR_H0EaTQT44QrOhqIxg/viewform"
+            }
+        ];
+
+        const hoje = new Date().toLocaleDateString('pt-BR');
+        document.getElementById('current-date').innerText = `Data: ${hoje}`;
+
+        if (localStorage.getItem('checklist_data') !== hoje) {
+            Object.keys(localStorage).forEach(chave => {
+                if (chave.startsWith('checklist_concluidos')) {
+                    localStorage.removeItem(chave);
+                }
+            });
+            localStorage.setItem('checklist_data', hoje);
+        }
+
+        const estacaoAtual = localStorage.getItem('checklist_estacao') || 'Novo Eldorado';
+        const turnoAtual = localStorage.getItem('checklist_turno') || '1° Turno';
+        const chaveStorage = `checklist_concluidos_${estacaoAtual}_${turnoAtual}`;
+
+        document.getElementById('badge-estacao').innerText = `${estacaoAtual} • ${turnoAtual}`;
+
+        let concluidos = JSON.parse(localStorage.getItem(chaveStorage)) || [];
+
+        function renderizarLista() {
+            const container = document.getElementById('task-list');
+            container.innerHTML = '';
+
+            formulariosExternos.forEach(item => {
+                const isDone = concluidos.includes(item.id);
+                const card = document.createElement('div');
+                card.className = `task-card ${isDone ? 'completed' : ''}`;
+
+                card.innerHTML = `
+                    <div class="task-info">
+                        <span class="task-title">${item.titulo}</span>
+                        <a href="${item.url}" target="_blank" class="task-link" onclick="aoClicarNoLink('${item.id}')">Abrir formulário ↗</a>
+                    </div>
+                    <button class="check-btn" onclick="alternarCheck('${item.id}')" title="Marcar como concluído">
+                        ✓
+                    </button>
+                `;
+
+                container.appendChild(card);
+            });
+
+            atualizarProgresso();
+        }
+
+        function alternarCheck(id) {
+            if (concluidos.includes(id)) {
+                concluidos = concluidos.filter(item => item !== id);
+            } else {
+                concluidos.push(id);
+            }
+            salvarERenderizar();
+        }
+
+        function aoClicarNoLink(id) {
+            if (!concluidos.includes(id)) {
+                concluidos.push(id);
+                salvarERenderizar();
+            }
+        }
+
+        function salvarERenderizar() {
+            localStorage.setItem(chaveStorage, JSON.stringify(concluidos));
+            renderizarLista();
+        }
+
+        function atualizarProgresso() {
+            const feitosExternos = formulariosExternos.filter(item => concluidos.includes(item.id)).length;
+            const porcentagem = (feitosExternos / formulariosExternos.length) * 100;
+            document.getElementById('progress-bar').style.width = `${porcentagem}%`;
+        }
+
+        renderizarLista();
+    </script>
+
+</body>
+
+</html>

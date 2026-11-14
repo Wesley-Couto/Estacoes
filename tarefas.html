@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rotinas Internas - Checklist</title>
+    <link rel="stylesheet" href="estilo.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#2563eb">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Rotina Estação">
+</head>
+
+<body>
+
+    <div class="app-container">
+        <header>
+            <span class="header-badge" id="badge-estacao" style="color: #0f766e; background: #ccfbf1;">Novo Eldorado •
+                1° Turno</span>
+            <h1>Rotinas Internas</h1>
+            <p id="current-date"></p>
+            <div class="progress-bar-container">
+                <div class="progress-bar" id="progress-bar"></div>
+            </div>
+        </header>
+
+        <div class="task-list" id="task-list"></div>
+
+        <nav class="bottom-nav">
+            <a href="index.html" class="back-btn">← Voltar ao Painel Principal</a>
+        </nav>
+    </div>
+
+    <script>
+        const tarefasInternas = [
+            {
+                id: "check_1",
+                titulo: "Preencher formulário de Entrega/Recebimento Estação"
+            },
+            {
+                id: "check_2",
+                titulo: "Conferir e preencher formulário de conferência claviculário"
+            },
+            {
+                id: "check_3",
+                titulo: "Conferir e preencher o formulário de entrega e recebimento dos escaninhos"
+            },
+            {
+                id: "check_4",
+                titulo: "Realizar DDS"
+            },
+            {
+                id: "check_5",
+                titulo: "(Líderes) Realizar checklist da bilheteria"
+            },
+            {
+                id: "check_6",
+                titulo: "(Líderes) Realizar lançamento de RAB’s e RVB"
+            }
+        ];
+
+        const hoje = new Date().toLocaleDateString('pt-BR');
+        document.getElementById('current-date').innerText = `Data: ${hoje}`;
+
+        if (localStorage.getItem('checklist_data') !== hoje) {
+            Object.keys(localStorage).forEach(chave => {
+                if (chave.startsWith('checklist_concluidos')) {
+                    localStorage.removeItem(chave);
+                }
+            });
+            localStorage.setItem('checklist_data', hoje);
+        }
+
+        const estacaoAtual = localStorage.getItem('checklist_estacao') || 'Novo Eldorado';
+        const turnoAtual = localStorage.getItem('checklist_turno') || '1° Turno';
+        const chaveStorage = `checklist_concluidos_${estacaoAtual}_${turnoAtual}`;
+
+        document.getElementById('badge-estacao').innerText = `${estacaoAtual} • ${turnoAtual}`;
+
+        let concluidos = JSON.parse(localStorage.getItem(chaveStorage)) || [];
+
+        function renderizarLista() {
+            const container = document.getElementById('task-list');
+            container.innerHTML = '';
+
+            tarefasInternas.forEach(item => {
+                const isDone = concluidos.includes(item.id);
+                const card = document.createElement('div');
+                card.className = `task-card internal-theme ${isDone ? 'completed' : ''}`;
+
+                card.innerHTML = `
+                    <div class="task-info">
+                        <span class="task-title">${item.titulo}</span>
+                    </div>
+                    <button class="check-btn" onclick="alternarCheck('${item.id}')" title="Marcar como concluído">
+                        ✓
+                    </button>
+                `;
+
+                container.appendChild(card);
+            });
+
+            atualizarProgresso();
+        }
+
+        function alternarCheck(id) {
+            if (concluidos.includes(id)) {
+                concluidos = concluidos.filter(item => item !== id);
+            } else {
+                concluidos.push(id);
+            }
+            localStorage.setItem(chaveStorage, JSON.stringify(concluidos));
+            renderizarLista();
+        }
+
+        function atualizarProgresso() {
+            const feitosInternos = tarefasInternas.filter(item => concluidos.includes(item.id)).length;
+            const porcentagem = (feitosInternos / tarefasInternas.length) * 100;
+            document.getElementById('progress-bar').style.width = `${porcentagem}%`;
+        }
+
+        renderizarLista();
+    </script>
+
+</body>
+
+</html>
