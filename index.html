@@ -249,7 +249,9 @@
             if (confirm(`Deseja desmarcar todos os formulários e rotinas de ${estacao} (${turno}) para toda a equipe?`)) {
                 salvarChecklistLocal(estacao, turno, []);
                 atualizarPainel();
-                await enviarChecklistOnline(estacao, turno, [], atualizarIndicadorSync);
+                await enviarChecklistOnline(estacao, turno, [], atualizarIndicadorSync, {
+                    acao: 'reset'
+                });
             }
         }
 

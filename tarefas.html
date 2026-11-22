@@ -110,15 +110,18 @@
         }
 
         async function alternarCheck(id) {
-            if (concluidos.includes(id)) {
+            const estavaMarcado = concluidos.includes(id);
+            if (estavaMarcado) {
                 concluidos = concluidos.filter(item => item !== id);
             } else {
                 concluidos.push(id);
             }
             renderizarLista();
-            await enviarChecklistOnline(estacaoAtual, turnoAtual, concluidos, atualizarIndicadorSync);
+            await enviarChecklistOnline(estacaoAtual, turnoAtual, concluidos, atualizarIndicadorSync, {
+                acao: estavaMarcado ? 'desmarcar' : 'marcar',
+                itemId: id
+            });
         }
-
         function atualizarProgresso() {
             const feitosInternos = tarefasInternas.filter(item => concluidos.includes(item.id)).length;
             const porcentagem = (feitosInternos / tarefasInternas.length) * 100;

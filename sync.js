@@ -8,7 +8,7 @@ function registrarEnvioRecente() {
     localStorage.setItem('checklist_ultimo_envio', String(Date.now()));
 }
 
-function houveEnvioRecente(segundos = 6) {
+function houveEnvioRecente(segundos = 4) {
     const ultimo = Number(localStorage.getItem('checklist_ultimo_envio') || 0);
     return (Date.now() - ultimo) < (segundos * 1000);
 }
@@ -39,7 +39,7 @@ function salvarChecklistLocal(estacao, turno, lista) {
     localStorage.setItem(obterChaveChecklist(estacao, turno), JSON.stringify(lista));
 }
 
-async function enviarChecklistOnline(estacao, turno, lista, onStatus) {
+async function enviarChecklistOnline(estacao, turno, lista, onStatus, opcoes = {}) {
     salvarChecklistLocal(estacao, turno, lista);
     registrarEnvioRecente();
     if (onStatus) onStatus('sincronizando');
@@ -54,7 +54,9 @@ async function enviarChecklistOnline(estacao, turno, lista, onStatus) {
                 data: obterDataHojeBR(),
                 estacao: estacao,
                 turno: turno,
-                concluidos: lista
+                concluidos: lista,
+                acao: opcoes.acao || 'sincronizar',
+                itemId: opcoes.itemId || ''
             })
         });
         registrarEnvioRecente();
@@ -68,8 +70,7 @@ async function enviarChecklistOnline(estacao, turno, lista, onStatus) {
 async function buscarChecklistsOnline(onStatus) {
     verificarViradaDeDia();
 
-    // Se houve alteração em qualquer página há menos de 6 segundos, preserva o estado local
-    if (houveEnvioRecente(6)) {
+    if (houveEnvioRecente(4)) {
         if (onStatus) onStatus('online');
         return null;
     }
@@ -78,13 +79,14 @@ async function buscarChecklistsOnline(onStatus) {
 
     try {
         const hoje = encodeURIComponent(obterDataHojeBR());
-        const resp = await fetch(`${SYNC_SCRIPT_URL}?tipo=checklist&data=${hoje}&t=${Date.now()}`);
+        const resp = await fetch(`${SYNC_SCRIPT_URL}?tipo=checklist&data=${hoje}&t=${Date.now()}`, {
+            cache: 'no-store'
+        });
         if (!resp.ok) throw new Error('Falha na resposta');
 
         const mapaNuvem = await resp.json();
 
-        // Verifica novamente caso o usuário tenha clicado durante a requisição
-        if (houveEnvioRecente(6)) {
+        if (houveEnvioRecente(4)) {
             if (onStatus) onStatus('online');
             return null;
         }
@@ -102,16 +104,21 @@ async function buscarChecklistsOnline(onStatus) {
     }
 }
 
+// Atualiza a cada 8 segundos enquanto a tela estiver aberta e ativa
 function iniciarSincronizacaoAutomatica(callbackSincronizar) {
     setInterval(() => {
         if (!document.hidden) {
             callbackSincronizar();
         }
-    }, 45000);
+    }, 8000);
 
     document.addEventListener('visibilitychange', () => {
         if (!document.hidden) {
             callbackSincronizar();
         }
+    });
+
+    window.addEventListener('focus', () => {
+        callbackSincronizar();
     });
 }

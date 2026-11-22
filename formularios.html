@@ -125,13 +125,17 @@
         }
 
         async function alternarCheck(id) {
-            if (concluidos.includes(id)) {
+            const estavaMarcado = concluidos.includes(id);
+            if (estavaMarcado) {
                 concluidos = concluidos.filter(item => item !== id);
             } else {
                 concluidos.push(id);
             }
             renderizarLista();
-            await enviarChecklistOnline(estacaoAtual, turnoAtual, concluidos, atualizarIndicadorSync);
+            await enviarChecklistOnline(estacaoAtual, turnoAtual, concluidos, atualizarIndicadorSync, {
+                acao: estavaMarcado ? 'desmarcar' : 'marcar',
+                itemId: id
+            });
         }
 
         async function aoClicarNoLink(id) {
@@ -141,7 +145,10 @@
             if (!concluidos.includes(id)) {
                 concluidos.push(id);
                 renderizarLista();
-                await enviarChecklistOnline(estacaoAtual, turnoAtual, concluidos, atualizarIndicadorSync);
+                await enviarChecklistOnline(estacaoAtual, turnoAtual, concluidos, atualizarIndicadorSync, {
+                    acao: 'marcar',
+                    itemId: id
+                });
             }
         }
 
