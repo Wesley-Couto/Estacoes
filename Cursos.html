@@ -19,10 +19,26 @@
         <header>
             <span class="header-badge" style="color: #7c3aed; background: #f3e8ff;">Capacitação</span>
             <h1>Cursos e Treinamentos</h1>
-            <p>Acesso rápido às plataformas da empresa</p>
+            <p id="current-date"></p>
         </header>
 
-        <div class="access-list" id="access-list"></div>
+        <div class="access-list">
+            <a href="https://quiz.mobifacil.com.br/" target="_blank" class="access-card">
+                <div class="access-info">
+                    <span class="access-title">Quiz Mobifácil</span>
+                    <span class="access-desc">Avaliações rápidas e testes de conhecimento</span>
+                </div>
+                <span class="access-icon">Abrir ↗</span>
+            </a>
+
+            <a href="https://escola.mobifacil.com.br/" target="_blank" class="access-card">
+                <div class="access-info">
+                    <span class="access-title">Escola Mobifácil</span>
+                    <span class="access-desc">Plataforma de cursos e capacitação contínua</span>
+                </div>
+                <span class="access-icon">Abrir ↗</span>
+            </a>
+        </div>
 
         <nav class="bottom-nav">
             <a href="index.html" class="back-btn">← Voltar ao Painel Principal</a>
@@ -30,42 +46,8 @@
     </div>
 
     <script>
-        const plataformasCursos = [
-            {
-                titulo: "Quiz Operacional",
-                descricao: "Testes rápidos e reciclagem de procedimentos",
-                url: "https://script.google.com/a/macros/metrobh.com.br/s/AKfycbzaS_b4hh9A1421iVJsr9qy0ur7krLMLmgjexrkRXWZIOcwu0ZyKPLjtSvx0L5JB3CB/exec"
-            },
-            {
-                titulo: "Escola Mobifácil",
-                descricao: "Portal oficial de cursos e treinamentos da empresa",
-                url: "https://www.escolamobifacil.com.br/login"
-            }
-        ];
-
-        function renderizarAcessos() {
-            const container = document.getElementById('access-list');
-            container.innerHTML = '';
-
-            plataformasCursos.forEach(item => {
-                const card = document.createElement('a');
-                card.href = item.url;
-                card.target = "_blank";
-                card.className = "access-card";
-
-                card.innerHTML = `
-                    <div class="access-info">
-                        <span class="access-title">${item.titulo}</span>
-                        <span class="access-desc">${item.descricao}</span>
-                    </div>
-                    <span class="access-icon">Abrir ↗</span>
-                `;
-
-                container.appendChild(card);
-            });
-        }
-
-        renderizarAcessos();
+        const hoje = new Date().toLocaleDateString('pt-BR');
+        document.getElementById('current-date').innerText = `Data: ${hoje}`;
     </script>
 
 </body>

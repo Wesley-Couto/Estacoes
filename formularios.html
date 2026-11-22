@@ -17,7 +17,10 @@
 
     <div class="app-container">
         <header>
-            <span class="header-badge" id="badge-estacao">Novo Eldorado • 1° Turno</span>
+            <div class="header-top-row">
+                <span class="header-badge" id="badge-estacao">Novo Eldorado • 1° Turno</span>
+                <span class="sync-pill" id="sync-status">● Conectando...</span>
+            </div>
             <h1>Formulários Diários</h1>
             <p id="current-date"></p>
             <div class="progress-bar-container">
@@ -32,6 +35,7 @@
         </nav>
     </div>
 
+    <script src="sync.js"></script>
     <script>
         const formulariosExternos = [
             {
@@ -66,25 +70,24 @@
             }
         ];
 
-        const hoje = new Date().toLocaleDateString('pt-BR');
+        const hoje = obterDataHojeBR();
         document.getElementById('current-date').innerText = `Data: ${hoje}`;
-
-        if (localStorage.getItem('checklist_data') !== hoje) {
-            Object.keys(localStorage).forEach(chave => {
-                if (chave.startsWith('checklist_concluidos')) {
-                    localStorage.removeItem(chave);
-                }
-            });
-            localStorage.setItem('checklist_data', hoje);
-        }
+        verificarViradaDeDia();
 
         const estacaoAtual = localStorage.getItem('checklist_estacao') || 'Novo Eldorado';
         const turnoAtual = localStorage.getItem('checklist_turno') || '1° Turno';
-        const chaveStorage = `checklist_concluidos_${estacaoAtual}_${turnoAtual}`;
 
         document.getElementById('badge-estacao').innerText = `${estacaoAtual} • ${turnoAtual}`;
 
-        let concluidos = JSON.parse(localStorage.getItem(chaveStorage)) || [];
+        let concluidos = lerChecklistLocal(estacaoAtual, turnoAtual);
+
+        function atualizarIndicadorSync(estado) {
+            const el = document.getElementById('sync-status');
+            el.className = `sync-pill ${estado}`;
+            if (estado === 'sincronizando') el.innerText = '↻ Sincronizando...';
+            else if (estado === 'online') el.innerText = '● Online';
+            else el.innerText = '○ Offline (Local)';
+        }
 
         function renderizarLista() {
             const container = document.getElementById('task-list');
@@ -121,28 +124,25 @@
             atualizarProgresso();
         }
 
-        function alternarCheck(id) {
+        async function alternarCheck(id) {
             if (concluidos.includes(id)) {
                 concluidos = concluidos.filter(item => item !== id);
             } else {
                 concluidos.push(id);
             }
-            salvarERenderizar();
+            renderizarLista();
+            await enviarChecklistOnline(estacaoAtual, turnoAtual, concluidos, atualizarIndicadorSync);
         }
 
-        function aoClicarNoLink(id) {
+        async function aoClicarNoLink(id) {
             const item = formulariosExternos.find(f => f.id === id);
             if (!item || !item.contabilizar) return;
 
             if (!concluidos.includes(id)) {
                 concluidos.push(id);
-                salvarERenderizar();
+                renderizarLista();
+                await enviarChecklistOnline(estacaoAtual, turnoAtual, concluidos, atualizarIndicadorSync);
             }
-        }
-
-        function salvarERenderizar() {
-            localStorage.setItem(chaveStorage, JSON.stringify(concluidos));
-            renderizarLista();
         }
 
         function atualizarProgresso() {
@@ -152,7 +152,19 @@
             document.getElementById('progress-bar').style.width = `${porcentagem}%`;
         }
 
+        async function sincronizarLista() {
+            const mapa = await buscarChecklistsOnline(atualizarIndicadorSync);
+            if (mapa !== null) {
+                const chave = `${estacaoAtual}_${turnoAtual}`;
+                concluidos = mapa[chave] || [];
+                salvarChecklistLocal(estacaoAtual, turnoAtual, concluidos);
+                renderizarLista();
+            }
+        }
+
         renderizarLista();
+        sincronizarLista();
+        iniciarSincronizacaoAutomatica(sincronizarLista);
     </script>
 
 </body>

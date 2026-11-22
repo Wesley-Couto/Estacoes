@@ -1,4 +1,4 @@
-const CACHE_NAME = 'checklist-estacao-v2';
+const CACHE_NAME = 'checklist-estacao-v5';
 const ARQUIVOS_LOCAIS = [
     './',
     './index.html',
@@ -7,6 +7,7 @@ const ARQUIVOS_LOCAIS = [
     './relatorios.html',
     './Cursos.html',
     './estilo.css',
+    './sync.js',
     './manifest.json'
 ];
 

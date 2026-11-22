@@ -17,7 +17,10 @@
 
     <div class="app-container">
         <header>
-            <span class="header-badge" id="badge-estacao">Novo Eldorado • 1° Turno</span>
+            <div class="header-top-row">
+                <span class="header-badge" id="badge-estacao">Novo Eldorado • 1° Turno</span>
+                <span class="sync-pill" id="sync-status" title="Status da sincronização online">● Conectando...</span>
+            </div>
             <h1>Checklist Diário</h1>
             <p id="current-date"></p>
 
@@ -30,7 +33,6 @@
             </div>
         </header>
 
-        <!-- Seletor de Estação e Turno -->
         <section class="shift-selector-card">
             <div class="select-group">
                 <label for="select-estacao">Estação</label>
@@ -73,7 +75,6 @@
         </div>
 
         <div class="menu-buttons">
-            <!-- Botão 1: Formulários -->
             <a href="formularios.html" class="nav-card-btn" id="btn-formularios">
                 <div class="btn-left">
                     <div class="btn-icon-box">
@@ -91,7 +92,6 @@
                 <span class="nav-badge" id="contador-externos">0/0 →</span>
             </a>
 
-            <!-- Botão 2: Rotinas Internas -->
             <a href="tarefas.html" class="nav-card-btn secondary" id="btn-internas">
                 <div class="btn-left">
                     <div class="btn-icon-box">
@@ -109,13 +109,13 @@
                 <span class="nav-badge" id="contador-internas">0/0 →</span>
             </a>
 
-            <!-- Botão 3: Passagem de Turno / Relatórios -->
             <a href="relatorios.html" class="nav-card-btn amber">
                 <div class="btn-left">
                     <div class="btn-icon-box">
                         <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"
                             viewBox="0 0 24 24">
-                            <path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            <path
+                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                         </svg>
                     </div>
                     <div class="btn-text-group">
@@ -126,7 +126,6 @@
                 <span class="nav-badge">Abrir →</span>
             </a>
 
-            <!-- Botão 4: Cursos e Treinamentos -->
             <a href="Cursos.html" class="nav-card-btn tertiary">
                 <div class="btn-left">
                     <div class="btn-icon-box">
@@ -151,28 +150,22 @@
         </div>
     </div>
 
+    <script src="sync.js"></script>
     <script>
         const idsExternos = ["form_1", "form_2", "form_4", "form_5"];
         const idsInternos = ["check_1", "check_2", "check_3", "check_4", "check_5", "check_6"];
         const idsDiarios = [...idsExternos, ...idsInternos];
 
-        const hoje = new Date().toLocaleDateString('pt-BR');
+        const hoje = obterDataHojeBR();
         document.getElementById('current-date').innerText = `Data: ${hoje}`;
+        verificarViradaDeDia();
 
-        // Limpa automaticamente todos os checklists de dias anteriores ao virar o dia
-        if (localStorage.getItem('checklist_data') !== hoje) {
-            Object.keys(localStorage).forEach(chave => {
-                if (chave.startsWith('checklist_concluidos')) {
-                    localStorage.removeItem(chave);
-                }
-            });
-            localStorage.setItem('checklist_data', hoje);
-        }
-
-        function obterChaveStorage() {
-            const estacao = document.getElementById('select-estacao').value;
-            const turno = document.getElementById('select-turno').value;
-            return `checklist_concluidos_${estacao}_${turno}`;
+        function atualizarIndicadorSync(estado) {
+            const el = document.getElementById('sync-status');
+            el.className = `sync-pill ${estado}`;
+            if (estado === 'sincronizando') el.innerText = '↻ Sincronizando...';
+            else if (estado === 'online') el.innerText = '● Online';
+            else el.innerText = '○ Offline (Local)';
         }
 
         function carregarSelecaoPlantao() {
@@ -200,13 +193,14 @@
             atualizarBadgeCabecalho();
         }
 
-        function salvarSelecaoPlantao() {
+        async function salvarSelecaoPlantao() {
             const estacao = document.getElementById('select-estacao').value;
             const turno = document.getElementById('select-turno').value;
             localStorage.setItem('checklist_estacao', estacao);
             localStorage.setItem('checklist_turno', turno);
             atualizarBadgeCabecalho();
             atualizarPainel();
+            await sincronizarAgora();
         }
 
         function atualizarBadgeCabecalho() {
@@ -215,13 +209,10 @@
             document.getElementById('badge-estacao').innerText = `${estacao} • ${turno}`;
         }
 
-        function obterConcluidos() {
-            const chave = obterChaveStorage();
-            return JSON.parse(localStorage.getItem(chave)) || [];
-        }
-
         function atualizarPainel() {
-            const concluidos = obterConcluidos();
+            const estacao = document.getElementById('select-estacao').value;
+            const turno = document.getElementById('select-turno').value;
+            const concluidos = lerChecklistLocal(estacao, turno);
 
             const feitosGeral = idsDiarios.filter(id => concluidos.includes(id)).length;
             const porcentagem = (feitosGeral / idsDiarios.length) * 100;
@@ -239,21 +230,40 @@
             document.getElementById('btn-internas').classList.toggle('all-done', internasFeitas === idsInternos.length);
         }
 
-        function resetManual() {
+        async function sincronizarAgora() {
             const estacao = document.getElementById('select-estacao').value;
             const turno = document.getElementById('select-turno').value;
-            if (confirm(`Deseja desmarcar todos os formulários e rotinas de ${estacao} (${turno})?`)) {
-                localStorage.setItem(obterChaveStorage(), JSON.stringify([]));
+            const mapa = await buscarChecklistsOnline(atualizarIndicadorSync);
+            if (mapa !== null) {
+                const chave = `${estacao}_${turno}`;
+                if (!mapa[chave]) {
+                    salvarChecklistLocal(estacao, turno, []);
+                }
                 atualizarPainel();
             }
         }
 
+        async function resetManual() {
+            const estacao = document.getElementById('select-estacao').value;
+            const turno = document.getElementById('select-turno').value;
+            if (confirm(`Deseja desmarcar todos os formulários e rotinas de ${estacao} (${turno}) para toda a equipe?`)) {
+                salvarChecklistLocal(estacao, turno, []);
+                atualizarPainel();
+                await enviarChecklistOnline(estacao, turno, [], atualizarIndicadorSync);
+            }
+        }
+
         carregarSelecaoPlantao();
+        atualizarPainel();
+        sincronizarAgora();
+        iniciarSincronizacaoAutomatica(sincronizarAgora);
+
         window.addEventListener('pageshow', () => {
             carregarSelecaoPlantao();
             atualizarPainel();
+            sincronizarAgora();
         });
-        atualizarPainel();
+
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('./sw.js').catch(() => { });
