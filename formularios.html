@@ -37,22 +37,32 @@
             {
                 id: "form_1",
                 titulo: "1. CHECK-LIST DIÁRIO",
-                url: "https://docs.google.com/forms/d/e/1FAIpQLSc4v6_KL56tjJqakxfiiy4c0zPyR8ElrLbuv0aFtrZYO-GXLA/viewform"
+                url: "https://docs.google.com/forms/d/e/1FAIpQLSc4v6_KL56tjJqakxfiiy4c0zPyR8ElrLbuv0aFtrZYO-GXLA/viewform",
+                contabilizar: true
             },
             {
                 id: "form_2",
                 titulo: "2. CHECK-LIST DEA",
-                url: "https://docs.google.com/forms/d/1Uiq2Z85dtfQXVUfXPlFWl8kIqPLkMXTXzFLw_-5H6fU/viewform?edit_requested=true"
+                url: "https://docs.google.com/forms/d/1Uiq2Z85dtfQXVUfXPlFWl8kIqPLkMXTXzFLw_-5H6fU/viewform?edit_requested=true",
+                contabilizar: true
             },
             {
                 id: "form_4",
                 titulo: "3. CHECK LIST ATM",
-                url: "https://docs.google.com/forms/d/e/1FAIpQLSdYCd0Q0nhNq9eIgOBBBllZMWqLrbCgojTKJsIIeiToH_mxVQ/viewform"
+                url: "https://docs.google.com/forms/d/e/1FAIpQLSdYCd0Q0nhNq9eIgOBBBllZMWqLrbCgojTKJsIIeiToH_mxVQ/viewform",
+                contabilizar: true
             },
             {
                 id: "form_5",
                 titulo: "4. CHECK LIST BILHETERIA",
-                url: "https://docs.google.com/forms/d/e/1FAIpQLSczaFm92wFpjvR05Mt1rx2WoZFav8NR_H0EaTQT44QrOhqIxg/viewform"
+                url: "https://docs.google.com/forms/d/e/1FAIpQLSczaFm92wFpjvR05Mt1rx2WoZFav8NR_H0EaTQT44QrOhqIxg/viewform",
+                contabilizar: true
+            },
+            {
+                id: "form_copasa",
+                titulo: "5. LEITURA DE ARQUIVOS COPASA",
+                url: "https://docs.google.com/forms/d/e/1FAIpQLSfKsgOPBiNZwsiREOLCmVUlEI5LEH1idKyxVlxCDD83rC9aNw/viewform",
+                contabilizar: false
             }
         ];
 
@@ -85,14 +95,24 @@
                 const card = document.createElement('div');
                 card.className = `task-card ${isDone ? 'completed' : ''}`;
 
+                if (!item.contabilizar) {
+                    card.style.borderLeftColor = '#64748b';
+                }
+
                 card.innerHTML = `
                     <div class="task-info">
                         <span class="task-title">${item.titulo}</span>
                         <a href="${item.url}" target="_blank" class="task-link" onclick="aoClicarNoLink('${item.id}')">Abrir formulário ↗</a>
                     </div>
+                    ${item.contabilizar ? `
                     <button class="check-btn" onclick="alternarCheck('${item.id}')" title="Marcar como concluído">
                         ✓
                     </button>
+                    ` : `
+                    <span style="font-size: 0.72rem; font-weight: 700; color: #64748b; background: #f1f5f9; padding: 5px 10px; border-radius: 999px; flex-shrink: 0;">
+                        Opcional
+                    </span>
+                    `}
                 `;
 
                 container.appendChild(card);
@@ -111,6 +131,9 @@
         }
 
         function aoClicarNoLink(id) {
+            const item = formulariosExternos.find(f => f.id === id);
+            if (!item || !item.contabilizar) return;
+
             if (!concluidos.includes(id)) {
                 concluidos.push(id);
                 salvarERenderizar();
@@ -123,8 +146,9 @@
         }
 
         function atualizarProgresso() {
-            const feitosExternos = formulariosExternos.filter(item => concluidos.includes(item.id)).length;
-            const porcentagem = (feitosExternos / formulariosExternos.length) * 100;
+            const obrigatorios = formulariosExternos.filter(item => item.contabilizar);
+            const feitosObrigatorios = obrigatorios.filter(item => concluidos.includes(item.id)).length;
+            const porcentagem = (feitosObrigatorios / obrigatorios.length) * 100;
             document.getElementById('progress-bar').style.width = `${porcentagem}%`;
         }
 

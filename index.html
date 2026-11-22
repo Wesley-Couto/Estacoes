@@ -109,7 +109,24 @@
                 <span class="nav-badge" id="contador-internas">0/0 →</span>
             </a>
 
-            <!-- Botão 3: Cursos e Treinamentos -->
+            <!-- Botão 3: Passagem de Turno / Relatórios -->
+            <a href="relatorios.html" class="nav-card-btn amber">
+                <div class="btn-left">
+                    <div class="btn-icon-box">
+                        <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"
+                            viewBox="0 0 24 24">
+                            <path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                    </div>
+                    <div class="btn-text-group">
+                        <span>Passagem de Turno</span>
+                        <span class="btn-subtitle">Registrar ocorrências e consultar histórico</span>
+                    </div>
+                </div>
+                <span class="nav-badge">Abrir →</span>
+            </a>
+
+            <!-- Botão 4: Cursos e Treinamentos -->
             <a href="Cursos.html" class="nav-card-btn tertiary">
                 <div class="btn-left">
                     <div class="btn-icon-box">
@@ -189,7 +206,7 @@
             localStorage.setItem('checklist_estacao', estacao);
             localStorage.setItem('checklist_turno', turno);
             atualizarBadgeCabecalho();
-            atualizarPainel(); // Atualiza imediatamente os contadores para a estação/turno selecionados
+            atualizarPainel();
         }
 
         function atualizarBadgeCabecalho() {

@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Passagem de Turno e Relatórios</title>
+    <link rel="stylesheet" href="estilo.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#2563eb">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Rotina Estação">
+</head>
+
+<body>
+
+    <div class="app-container">
+        <header>
+            <span class="header-badge" id="badge-estacao" style="color: #d97706; background: #fef3c7;">Novo Eldorado •
+                1° Turno</span>
+            <h1>Passagem de Turno</h1>
+            <p id="current-date"></p>
+        </header>
+
+        <!-- Formulário de Registro -->
+        <section class="report-form-card">
+            <h2 class="section-title">Novo Registro para o Próximo Turno</h2>
+
+            <div class="form-group">
+                <label for="input-agente">Agente / Matrícula</label>
+                <input type="text" id="input-agente" placeholder="Ex: João Silva - Mat. 1234" autocomplete="name">
+            </div>
+
+            <div class="form-group">
+                <label for="input-relato">Ocorrências e Observações</label>
+                <textarea id="input-relato" rows="4"
+                    placeholder="Descreva pendências, equipamentos com falha, recados para o próximo turno ou observações gerais..."></textarea>
+            </div>
+
+            <div class="checkbox-inline">
+                <input type="checkbox" id="incluir-checklist" checked>
+                <label for="incluir-checklist">Anexar resumo automático do checklist atual (<span
+                        id="resumo-preview">0/10</span>)</label>
+            </div>
+
+            <div class="form-actions">
+                <button type="button" class="submit-report-btn" id="btn-salvar" onclick="enviarRelatorio()">
+                    ☁️ Salvar na Nuvem
+                </button>
+                <button type="button" class="copy-report-btn" id="btn-copiar" onclick="copiarParaWhatsApp()">
+                    📋 Copiar p/ WhatsApp
+                </button>
+            </div>
+            <p class="status-feedback" id="status-feedback"></p>
+        </section>
+
+        <!-- Histórico na Nuvem -->
+        <section class="history-section">
+            <div class="history-header">
+                <h2 class="section-title">Histórico de Relatórios</h2>
+                <button type="button" class="refresh-btn" onclick="carregarRelatorios()" title="Atualizar lista">↻
+                    Atualizar</button>
+            </div>
+
+            <div class="filter-bar">
+                <select id="filtro-estacao" onchange="filtrarRelatorios()">
+                    <option value="ATUAL">Estação Atual</option>
+                    <option value="TODAS">Todas as Estações</option>
+                </select>
+                <input type="text" id="filtro-busca" placeholder="Buscar por data, agente ou palavra..."
+                    oninput="filtrarRelatorios()">
+            </div>
+
+            <div id="lista-relatorios" class="report-list">
+                <div class="loading-box">Carregando relatórios da nuvem...</div>
+            </div>
+        </section>
+
+        <nav class="bottom-nav">
+            <a href="index.html" class="back-btn">← Voltar ao Painel Principal</a>
+        </nav>
+    </div>
+
+    <script>
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbywPITfSjedOrEEIPIgeyAxL33JZ-QWRTw_rdgZx4WGz7P7TM4Ksi3ZLyEokTpOs9qg/exec";
+
+        const idsExternos = ["form_1", "form_2", "form_4", "form_5"];
+        const idsInternos = ["check_1", "check_2", "check_3", "check_4", "check_5", "check_6"];
+        const idsDiarios = [...idsExternos, ...idsInternos];
+
+        const hoje = new Date().toLocaleDateString('pt-BR');
+        document.getElementById('current-date').innerText = `Data: ${hoje}`;
+
+        const estacaoAtual = localStorage.getItem('checklist_estacao') || 'Novo Eldorado';
+        const turnoAtual = localStorage.getItem('checklist_turno') || '1° Turno';
+        const chaveStorage = `checklist_concluidos_${estacaoAtual}_${turnoAtual}`;
+
+        document.getElementById('badge-estacao').innerText = `${estacaoAtual} • ${turnoAtual}`;
+        document.querySelector('#filtro-estacao option[value="ATUAL"]').innerText = `Apenas ${estacaoAtual}`;
+
+        const agenteSalvo = localStorage.getItem('checklist_ultimo_agente');
+        if (agenteSalvo) {
+            document.getElementById('input-agente').value = agenteSalvo;
+        }
+
+        function obterResumoChecklist() {
+            const concluidos = JSON.parse(localStorage.getItem(chaveStorage)) || [];
+            const extFeitos = idsExternos.filter(id => concluidos.includes(id)).length;
+            const intFeitos = idsInternos.filter(id => concluidos.includes(id)).length;
+            const totalFeitos = extFeitos + intFeitos;
+            return {
+                curto: `${totalFeitos}/${idsDiarios.length} concluídos`,
+                detalhado: `Checklist: ${totalFeitos}/${idsDiarios.length} (Formulários: ${extFeitos}/${idsExternos.length} | Rotinas: ${intFeitos}/${idsInternos.length})`
+            };
+        }
+
+        document.getElementById('resumo-preview').innerText = obterResumoChecklist().curto;
+
+        let todosRelatorios = [];
+
+        async function carregarRelatorios() {
+            const container = document.getElementById('lista-relatorios');
+            container.innerHTML = '<div class="loading-box">Buscando registros na nuvem...</div>';
+
+            try {
+                const response = await fetch(SCRIPT_URL);
+                if (!response.ok) throw new Error('Falha na resposta');
+                todosRelatorios = await response.json();
+                filtrarRelatorios();
+            } catch (error) {
+                console.error(error);
+                container.innerHTML = `
+                    <div class="empty-box error">
+                        Não foi possível ler o histórico. Verifique se o Apps Script está publicado como "Qualquer pessoa".
+                    </div>
+                `;
+            }
+        }
+
+        function filtrarRelatorios() {
+            const filtroEstacao = document.getElementById('filtro-estacao').value;
+            const termo = document.getElementById('filtro-busca').value.toLowerCase().trim();
+
+            const filtrados = todosRelatorios.filter(item => {
+                const matchEstacao = filtroEstacao === 'TODAS' || (item.estacao || '').toLowerCase() === estacaoAtual.toLowerCase();
+                if (!matchEstacao) return false;
+
+                if (!termo) return true;
+                const conteudo = `${item.dataHora} ${item.estacao} ${item.turno} ${item.agente} ${item.texto}`.toLowerCase();
+                return conteudo.includes(termo);
+            });
+
+            renderizarRelatorios(filtrados);
+        }
+
+        function renderizarRelatorios(lista) {
+            const container = document.getElementById('lista-relatorios');
+            container.innerHTML = '';
+
+            if (lista.length === 0) {
+                container.innerHTML = '<div class="empty-box">Nenhum relatório encontrado para este filtro.</div>';
+                return;
+            }
+
+            lista.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'report-item-card';
+
+                const textoSeguro = escaparHTML(item.texto || '').replace(/\n/g, '<br>');
+                const agenteSeguro = escaparHTML(item.agente || 'Não informado');
+                const estacaoSegura = escaparHTML(item.estacao || '');
+                const turnoSeguro = escaparHTML(item.turno || '');
+                const dataSegura = escaparHTML(String(item.dataHora || ''));
+                const checklistSeguro = escaparHTML(item.checklistResumo || '');
+
+                card.innerHTML = `
+                    <div class="report-item-header">
+                        <span class="report-station-tag">${estacaoSegura} • ${turnoSeguro}</span>
+                        <span class="report-date">${dataSegura}</span>
+                    </div>
+                    <div class="report-author">👤 ${agenteSeguro}</div>
+                    <div class="report-body">${textoSeguro}</div>
+                    ${checklistSeguro ? `<div class="report-checklist-tag">📊 ${checklistSeguro}</div>` : ''}
+                `;
+
+                container.appendChild(card);
+            });
+        }
+
+        async function enviarRelatorio() {
+            const inputAgente = document.getElementById('input-agente');
+            const inputRelato = document.getElementById('input-relato');
+            const incluirChecklist = document.getElementById('incluir-checklist').checked;
+            const btnSalvar = document.getElementById('btn-salvar');
+
+            const agente = inputAgente.value.trim();
+            const texto = inputRelato.value.trim();
+
+            if (!agente) {
+                mostrarFeedback('Por favor, informe seu nome ou matrícula.', 'error');
+                inputAgente.focus();
+                return;
+            }
+
+            if (!texto) {
+                mostrarFeedback('Escreva alguma observação ou ocorrência antes de salvar.', 'error');
+                inputRelato.focus();
+                return;
+            }
+
+            localStorage.setItem('checklist_ultimo_agente', agente);
+
+            const payload = {
+                estacao: estacaoAtual,
+                turno: turnoAtual,
+                agente: agente,
+                texto: texto,
+                checklistResumo: incluirChecklist ? obterResumoChecklist().detalhado : ''
+            };
+
+            btnSalvar.disabled = true;
+            btnSalvar.innerText = 'Enviando...';
+            mostrarFeedback('Salvando relatório na planilha...', 'info');
+
+            try {
+                await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: {
+                        'Content-Type': 'text/plain;charset=utf-8'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                inputRelato.value = '';
+                mostrarFeedback('✅ Relatório enviado! Atualizando lista...', 'success');
+
+                // Aguarda 1.5s para o Google processar a linha antes de buscar o histórico
+                setTimeout(() => {
+                    carregarRelatorios();
+                }, 1500);
+            } catch (error) {
+                console.error(error);
+                mostrarFeedback('❌ Falha de conexão. Verifique sua internet.', 'error');
+            } finally {
+                btnSalvar.disabled = false;
+                btnSalvar.innerText = '☁️ Salvar na Nuvem';
+            }
+        }
+
+        function copiarParaWhatsApp() {
+            const agente = document.getElementById('input-agente').value.trim() || 'Não informado';
+            const texto = document.getElementById('input-relato').value.trim() || 'Sem alterações / Tudo normal.';
+            const incluirChecklist = document.getElementById('incluir-checklist').checked;
+            const btnCopiar = document.getElementById('btn-copiar');
+
+            let mensagem = `*PASSAGEM DE TURNO - ${estacaoAtual.toUpperCase()}*\n`;
+            mensagem += `📅 Data: ${hoje} | 🕒 ${turnoAtual}\n`;
+            mensagem += `👤 Agente: ${agente}\n`;
+            if (incluirChecklist) {
+                mensagem += `📊 ${obterResumoChecklist().detalhado}\n`;
+            }
+            mensagem += `\n📝 *Observações:*\n${texto}`;
+
+            navigator.clipboard.writeText(mensagem).then(() => {
+                const textoOriginal = btnCopiar.innerText;
+                btnCopiar.classList.add('copied');
+                btnCopiar.innerText = '✓ Copiado!';
+                setTimeout(() => {
+                    btnCopiar.classList.remove('copied');
+                    btnCopiar.innerText = textoOriginal;
+                }, 2500);
+            }).catch(() => {
+                alert('Não foi possível copiar automaticamente. Selecione o texto e copie manualmente.');
+            });
+        }
+
+        function mostrarFeedback(msg, tipo) {
+            const el = document.getElementById('status-feedback');
+            el.innerText = msg;
+            el.className = `status-feedback visible ${tipo}`;
+            if (tipo === 'success') {
+                setTimeout(() => el.classList.remove('visible'), 5000);
+            }
+        }
+
+        function escaparHTML(str) {
+            return str
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        carregarRelatorios();
+    </script>
+
+</body>
+
+</html>

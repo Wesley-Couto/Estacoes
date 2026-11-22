@@ -1,10 +1,11 @@
-const CACHE_NAME = 'checklist-estacao-v1';
+const CACHE_NAME = 'checklist-estacao-v2';
 const ARQUIVOS_LOCAIS = [
     './',
     './index.html',
     './formularios.html',
     './tarefas.html',
-    './cursos.html',
+    './relatorios.html',
+    './Cursos.html',
     './estilo.css',
     './manifest.json'
 ];
@@ -29,6 +30,7 @@ self.addEventListener('activate', event => {
 
 self.addEventListener('fetch', event => {
     if (event.request.method !== 'GET') return;
+    if (event.request.url.includes('script.google.com')) return;
 
     event.respondWith(
         fetch(event.request)
